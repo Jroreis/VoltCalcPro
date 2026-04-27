@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoltCalc Pro</title>
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-app-pub-5688863534851791" crossorigin="anonymous"></script>
+    
+    <style>
+        body { 
+            background: #0a0a0a; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            margin: 0; 
+            color: white; 
+            overflow-x: hidden; 
+            position: relative; 
+            min-height: 100vh;
+        }
+
+        /* --- TELA DE ENTRADA (BOTÃO REDONDO) --- */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        #splash.hidden { opacity: 0; visibility: hidden; }
+        
+        .start-btn {
+            background: rgba(0, 255, 136, 0.1); 
+            border: 2px solid #00ff88; 
+            color: #00ff88;
+            /* Alterado para círculo perfeito */
+            width: 150px;
+            height: 150px;
+            border-radius: 50%; 
+            
+            cursor: pointer; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            transition: 0.3s; 
+            z-index: 1001;
+            padding: 0;
+            outline: none;
+        }
+        .start-btn span { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; }
+        .start-btn:hover { 
+            background: #00ff88; 
+            color: #000; 
+            box-shadow: 0 0 50px #00ff88; 
+            transform: scale(1.1);
+        }
+        
+        .flash-white {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0; pointer-events: none; z-index: 2000;
+        }
+        @keyframes flash-anim {
+            0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; }
+        }
+
+        /* --- SISTEMA DE ABAS --- */
+        .tab-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            z-index: 20;
+        }
+        .tab-btn {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            color: #888;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            border-color: #00ff88;
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+        }
+        .tab-content { display: none; width: 100%; flex-direction: column; align-items: center; }
+        .tab-content.active { display: flex; }
+
+        @keyframes shock {
+            0% { opacity: 0; transform: scale(0.9); filter: brightness(3); }
+            10% { opacity: 1; transform: scale(1); filter: brightness(1); }
+            15% { filter: brightness(5) drop-shadow(0 0 10px #00ff88); }
+            20% { filter: brightness(1); }
+            80% { filter: brightness(2) drop-shadow(0 0 5px #00ff88); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .card { 
+            background: rgba(30, 30, 30, 0.9); 
+            padding: 25px; border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            width: 350px; text-align: center; margin-bottom: 20px;
+            animation: shock 0.6s ease-out; position: relative; z-index: 10;
+        }
+
+        .app-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .icon-box { background: #00ff88; color: #000; padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); }
+        h1 { margin: 0; font-size: 1.5rem; color: #00ff88; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; margin-top: 15px; }
+        .field { text-align: left; }
+        label { font-size: 0.8rem; color: #bbb; margin-bottom: 5px; display: block; }
+        input, select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #333; background: #2d2d2d; color: #00ff88; box-sizing: border-box; font-size: 0.9rem; }
+        button { width: 100%; padding: 12px; background: #00ff88; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.3s; }
+        button:hover { background: #00cc6e; box-shadow: 0 0 10px #00ff88; }
+        .btn-clear { background: #444; color: white; }
+        .result-box { margin-top: 15px; padding: 10px; border-radius: 5px; background: #2d2d2d; color: #00ff88; font-weight: bold; min-height: 20px; }
+        .obs-box { margin-top: 10px; font-size: 0.85rem; padding: 8px; line-height: 1.4; border-radius: 5px; text-align: left; }
+        .recomenda-box { background: #252525; border-left: 4px solid #00ff88; padding: 10px; margin-top: 10px; text-align: left; font-size: 0.85rem; line-height: 1.6; }
+        #lightningCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        
+        /* ESTILO DO CONTAINER DE ANÚNCIO */
+        .ad-banner-footer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splash">
+        <button class="start-btn" onclick="iniciarSistema()">
+            <div class="icon-box" style="padding: 10px 15px; font-size: 1.5rem;">Ω</div>
+            <span>Entrar</span>
+        </button>
+    </div>
+    <div id="flash" class="flash-white"></div>
+    <canvas id="lightningCanvas"></canvas>
+
+    <div class="tab-container" id="menu-abas" style="display: none;">
+        <button class="tab-btn active" onclick="abrirAba('ohm', this)">Ω <span>Ohm</span></button>
+        <button class="tab-btn" onclick="abrirAba('queda', this)">⚠️ <span>Queda</span></button>
+    </div>
+
+    <div id="ohm" class="tab-content active">
+        <div class="card">
+            <div class="app-header"><div class="icon-box">Ω</div><h1>VoltCalc Pro</h1></div>
+            <p style="font-size: 0.8rem; color: #bbb;">Lei de Ohm e Dimensionamento</p>
+            <div class="input-grid">
+                <div class="field"><label>Tensão (V)</label><input type="number" id="v"></div>
+                <div class="field"><label>Corrente (A)</label><input type="number" id="i"></div>
+                <div class="field"><label>Resistência (Ω)</label><input type="number" id="r"></div>
+                <div class="field"><label>Potência (W)</label><input type="number" id="p"></div>
+            </div>
+            <button onclick="calcularTudo()">Calcular</button>
+            <button class="btn-clear" onclick="limparOhm()">Limpar</button>
+            <div id="resultado" class="result-box">Aguardando dados...</div>
+            <div id="recomenda_ohm" class="recomenda-box" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div id="queda" class="tab-content">
+        <div class="card">
+            <div class="app-header"><div class="icon-box">⚠️</div><h1>Queda de Tensão</h1></div>
+            <p style="font-size: 0.8rem; color: #bbb;">Dimensionamento NBR 5410</p>
+            <div class="input-grid">
+                <div class="field"><label>Distância (m)</label><input type="number" id="distancia"></div>
+                <div class="field"><label>Corrente (A)</label><input type="number" id="i_queda"></div>
+                <div class="field"><label>Bitola (mm²)</label><input type="number" id="bitola"></div>
+                <div class="field"><label>Tensão (V)</label><input type="number" id="v_rede"></div>
+                <div class="field" style="grid-column: span 2;">
+                    <label>Material do Cabo</label>
+                    <select id="material">
+                        <option value="0.0172">Cobre (Cu)</option>
+                        <option value="0.0282">Alumínio (Al)</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="calcularQueda()">Calcular Queda</button>
+            <button class="btn-clear" onclick="limparQueda()">Limpar</button>
+            
+            <div id="res_queda" class="result-box">Resultado: --</div>
+            <div id="obs_queda" class="obs-box"></div>
+            <div id="recomenda" class="recomenda-box" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="ad-banner-footer">
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:320px;height:50px"
+             data-ad-client="ca-app-pub-5688863534851791"
+             data-ad-slot="2445295585"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <script>
+        // CONFIGURAÇÕES ADMOB
+        const ADS_CONFIG = {
+            bannerId: "ca-app-pub-5688863534851791/2445295585",
+            aberturaId: "ca-app-pub-5688863534851791/2748547912"
+        };
+
+        function abrirAba(idAba, btn) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(idAba).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function iniciarSistema() {
+            // Chamada para o anúncio de abertura (simulada via push no web view)
+            try { (adsbygoogle = window.adsbygoogle || []).push({ params: { google_ad_slot: ADS_CONFIG.aberturaId } }); } catch(e){}
+
+            const thunder = new Audio('https://www.soundjay.com/nature/sounds/thunder-3.mp3');
+            thunder.volume = 0.8; thunder.play().catch(() => {});
+            document.getElementById('flash').style.animation = "flash-anim 1.2s forwards";
+            setTimeout(() => {
+                document.getElementById('splash').classList.add('hidden');
+                document.getElementById('menu-abas').style.display = 'flex';
+                active = true; anim();
+            }, 400);
+        }
+
+        const bitolas = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95];
+        const capCu = [15.5, 21, 28, 36, 50, 68, 89, 110, 134, 171, 207];
+        const capAl = [12, 16, 22, 28, 39, 53, 70, 86, 105, 134, 162];
+        const disjuntores = [10, 16, 20, 25, 32, 40, 50, 63, 70, 80, 100, 125];
+
+        function obterSugestaoTecnica(amp, material) {
+            const cap = (material === "0.0282") ? capAl : capCu;
+            let idx = bitolas.findIndex((b, i) => cap[i] >= amp);
+            if (idx === -1) idx = bitolas.length - 1;
+            
+            let bitMin = bitolas[idx];
+            let bitMax = bitolas[idx + 1] || bitolas[idx];
+            let disjMin = disjuntores.find(d => d >= amp) || 125;
+            let disjMax = disjuntores[disjuntores.indexOf(disjMin) + 1] || disjMin;
+            
+            return { bitMin, bitMax, disjMin, disjMax };
+        }
+
+        function calcularTudo() {
+            let v = parseFloat(document.getElementById('v').value);
+            let i = parseFloat(document.getElementById('i').value);
+            let r = parseFloat(document.getElementById('r').value);
+            let p = parseFloat(document.getElementById('p').value);
+            if ([v, i, r, p].filter(x => !isNaN(x)).length < 2) return;
+            if (!isNaN(v) && !isNaN(i)) { r = v/i; p = v*i; }
+            else if (!isNaN(v) && !isNaN(r)) { i = v/r; p = (v*v)/r; }
+            else if (!isNaN(v) && !isNaN(p)) { i = p/v; r = (v*v)/p; }
+            else if (!isNaN(i) && !isNaN(r)) { v = i*r; p = (i*i)*r; }
+            else if (!isNaN(i) && !isNaN(p)) { v = p/i; r = p/(i*i); }
+            else if (!isNaN(r) && !isNaN(p)) { v = Math.sqrt(p*r); i = Math.sqrt(p/r); }
+            document.getElementById('v').value = v.toFixed(2);
+            document.getElementById('i').value = i.toFixed(2);
+            document.getElementById('r').value = r.toFixed(2);
+            document.getElementById('p').value = p.toFixed(2);
+            document.getElementById('resultado').innerHTML = "✅ Cálculo Concluído";
+            let sug = obterSugestaoTecnica(i, "0.0172");
+            let rec = document.getElementById('recomenda_ohm');
+            rec.style.display = "block";
+            rec.innerHTML = `🛠️ <strong>Sessão NBR 5410 (Mínima):</strong><br>• Bitola Mínima: ${sug.bitMin}mm²<br>• Disjuntor Mínimo: ${sug.disjMin}A<br><hr style="border:0; border-top:1px solid #444; margin:5px 0;">🛠️ <strong>Sessão NBR 5410 (Máxima):</strong><br>• Bitola Máxima: ${sug.bitMax}mm²<br>• Disjuntor Máximo: ${sug.disjMax}A`;
+        }
+
+        function calcularQueda() {
+            const L = parseFloat(document.getElementById('distancia').value);
+            const I = parseFloat(document.getElementById('i_queda').value);
+            const S = parseFloat(document.getElementById('bitola').value);
+            const V = parseFloat(document.getElementById('v_rede').value);
+            const rho = document.getElementById('material').value; 
+            const rhoVal = parseFloat(rho);
+
+            if (isNaN(L) || isNaN(I) || isNaN(S) || isNaN(V)) return;
+
+            const vDrop = (2 * L * I * rhoVal) / S;
+            const perc = (vDrop / V) * 100;
+            const vFinal = V - vDrop;
+            
+            document.getElementById('res_queda').innerHTML = `Perda: ${vDrop.toFixed(2)}V (${perc.toFixed(2)}%)`;
+
+            let bitSugerida = 0, novaQueda = 0;
+            const capArray = (rho === "0.0282") ? capAl : capCu;
+
+            for (let k = 0; k < bitolas.length; k++) {
+                if (capArray[k] >= I) {
+                    let testeQueda = ((2 * L * I * rhoVal) / bitolas[k] / V) * 100;
+                    if (testeQueda <= 4) {
+                        bitSugerida = bitolas[k];
+                        novaQueda = testeQueda;
+                        break;
+                    }
+                }
+            }
+
+            let sug = obterSugestaoTecnica(I, rho);
+            let bitMaxRel = (bitSugerida > sug.bitMax) ? bitSugerida : sug.bitMax;
+
+            const rec = document.getElementById('recomenda');
+            rec.style.display = "block";
+            rec.innerHTML = `
+                📜 <strong>Sessão NBR 5410 (Mínima):</strong><br>
+                • Bitola Mínima: <strong>${sug.bitMin} mm²</strong><br>
+                • Disjuntor Mínimo: <strong>${sug.disjMin} A</strong><br>
+                <hr style="border:0; border-top:1px solid #444; margin:8px 0;">
+                📜 <strong>Sessão NBR 5410 (Máxima):</strong><br>
+                • Bitola Máxima: <strong>${bitMaxRel} mm²</strong><br>
+                • Disjuntor Máximo: <strong>${sug.disjMax} A</strong><br>
+                <hr style="border:0; border-top:1px solid #444; margin:8px 0;">
+                📉 <strong>Resultados Finais:</strong><br>
+                • Queda Absoluta: <strong>${vDrop.toFixed(2)} V</strong><br>
+                • Queda Percentual: <strong>${perc.toFixed(2)} %</strong><br>
+                • Tensão Final: <strong>${vFinal.toFixed(2)} V</strong>`;
+
+            const obs = document.getElementById('obs_queda');
+            if (perc > 4) {
+                obs.style.color = "#ff4d4d"; obs.style.background = "rgba(255, 77, 77, 0.1)";
+                obs.innerHTML = `🚨 <strong>ALERTA:</strong> Queda de tensão elevada (${perc.toFixed(2)}%).<br><br>
+                💡 <strong>SOLUÇÃO TÉCNICA SUGERIDA:</strong><br>
+                • Corrente de Projeto (Ib): <strong>${I} A</strong><br>
+                • Seção Sugerida (${rho === "0.0282" ? "Al" : "Cu"}): <strong>${bitSugerida} mm²</strong><br>
+                • Nova Queda estimada: <strong>${novaQueda.toFixed(2)} %</strong>`;
+            } else {
+                obs.style.color = "#00ff88"; obs.style.background = "transparent";
+                obs.innerHTML = "✅ <strong>CONFORMIDADE:</strong> O circuito atende aos requisitos de queda de tensão.";
+            }
+        }
+
+        function limparOhm() { ["v", "i", "r", "p"].forEach(id => document.getElementById(id).value = ""); document.getElementById('recomenda_ohm').style.display="none"; document.getElementById('resultado').innerHTML = "Aguardando dados..."; }
+        function limparQueda() { ["distancia", "i_queda", "bitola", "v_rede"].forEach(id => document.getElementById(id).value = ""); document.getElementById('recomenda').style.display="none"; document.getElementById('obs_queda').innerHTML = ""; document.getElementById('res_queda').innerHTML = "Resultado: --"; }
+
+        const canvas = document.getElementById('lightningCanvas');
+        const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        class Lightning {
+            constructor() {
+                this.x = Math.random() * canvas.width; this.y = 0; this.points = []; this.life = 0; this.alpha = 1;
+                let cx = this.x, cy = this.y;
+                for(let i=0; i<20; i++) {
+                    let nx = cx + (Math.random()-0.5)*50; let ny = cy + (canvas.height/20);
+                    this.points.push({x: nx, y: ny}); cx = nx; cy = ny;
+                }
+            }
+            draw() {
+                ctx.beginPath(); ctx.strokeStyle = `rgba(0,255,136,${this.alpha})`;
+                ctx.lineWidth = 2; ctx.moveTo(this.x, this.y);
+                this.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+            }
+            update() { this.life++; this.alpha = 1 - (this.life/25); }
+        }
+        let bolts = [], timer = 0, active = false; 
+        function anim() {
+            if(!active) return;
+            ctx.fillStyle = 'rgba(10,10,10,0.2)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            if(timer-- <= 0) { bolts.push(new Lightning()); timer = 20; }
+            bolts.forEach((b, i) => { b.draw(); b.update(); if(b.alpha<=0) bolts.splice(i,1); });
+            requestAnimationFrame(anim);
+        }
+    </script>
+</body>
+</html>
